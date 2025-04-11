@@ -9,6 +9,7 @@ import {
   ListItemButton,
   Box,
   Typography,
+  Divider,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
@@ -40,6 +41,12 @@ const Sidebar = () => {
       }}
     >
       <Box sx={{ overflow: "auto", mt: 8 }}>
+        <Box sx={{ p: 2, textAlign: "center" }}>
+          <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
+            Hostel Management
+          </Typography>
+        </Box>
+        <Divider />
         <List>
           {menuItems.map((item) => (
             <ListItem key={item.text} disablePadding>
