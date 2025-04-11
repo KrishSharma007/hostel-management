@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_URL =
-  "https://hostel-backend-dutxhcqcs-krishsharma007s-projects.vercel.app/api";
+  "https://hostel-backend-lyart.vercel.app/api";
 
 // Create axios instance
 const api = axios.create({
