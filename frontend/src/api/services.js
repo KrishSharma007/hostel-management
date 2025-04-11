@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_URL =
-  "https://hostel-backend-lyart.vercel.app/api";
+  "https://hostel-management-we8d.onrender.com/api";
 
 // Create axios instance
 const api = axios.create({
