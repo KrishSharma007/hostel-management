@@ -1,0 +1,194 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Address Table
+model PersonalAddress {
+  id        Int     @id @default(autoincrement())
+  hNo       String
+  street    String
+  city      String
+  state     String
+  pincode   String
+  person    Person? @relation(fields: [personId], references: [id], onDelete: Cascade)
+  personId  Int?    @unique
+}
+
+model HostelAddress {
+  id        Int     @id @default(autoincrement())
+  building  String
+  street    String
+  city      String
+  state     String
+  pincode   String
+  landmark  String?
+  hostel    Hostel? @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  hostelId  Int?    @unique
+}
+// Person Table
+model Person {
+  id              Int            @id @default(autoincrement())
+  name            String
+  personType      PersonType
+  contactNo       String?        @map("Contact_no")
+  personalAddress PersonalAddress?
+  student         Student? 
+  warden          Warden?
+  attendant       Attendant?
+}
+
+// Hostel Table
+model Hostel {
+  id                    Int                     @id @default(autoincrement()) @map("HostelID")
+  name                  String                  @map("Name")
+  contactNo            String?                 @map("Contact_no")
+  rooms                 Room[]
+  attendantDuties       AttendantDuty[]
+  wardenAssignments     HostelWardenAssignment[]
+  hostelAddress         HostelAddress?
+  @@map("Hostel")
+}
+
+// Student Table
+model Student {
+  id              Int              @id @default(autoincrement()) @map("StudentID")
+  personId        Int              @unique @map("PersonID")
+  remark          String?          @map("Remark")
+  emergencyContact String?         @map("Emergency_contact")
+  fatherContact   String?          @map("Father_contact")
+  motherContact   String?          @map("Mother_contact")
+  person          Person           @relation(fields: [personId], references: [id], onDelete: Cascade)
+  roomAllocations RoomAllocation[]
+  messBills       MessBill[]
+
+  @@map("Student")
+}
+
+// Warden Table
+model Warden {
+  id                Int                     @id @default(autoincrement()) @map("WardenID")
+  personId          Int                     @unique @map("PersonID")
+  person            Person                  @relation(fields: [personId], references: [id], onDelete: Cascade)
+  hostelAssignments HostelWardenAssignment[]
+
+  @@map("Warden")
+}
+
+// Attendant Table
+model Attendant {
+  id     Int             @id @default(autoincrement()) @map("AttendantID")
+  personId Int           @unique @map("PersonID")
+  person  Person         @relation(fields: [personId], references: [id], onDelete: Cascade)
+  duties  AttendantDuty[]
+
+  @@map("Attendant")
+}
+
+
+// Room Table
+model Room {
+  id              Int              @id @default(autoincrement())
+  hostel          Hostel           @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  hostelId        Int
+  roomType        RoomType
+  capacity        Int              @default(1) // Add this line
+  furnitureDetails String?
+  allocations     RoomAllocation[]
+}
+
+// Room Allocation Table
+model RoomAllocation {
+  id            Int       @id @default(autoincrement())
+  student       Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId     Int
+  room          Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId        Int
+  academicYear  String @db.VarChar(9)    // Format: "2023-2024"
+  startDate     DateTime
+  endDate       DateTime?
+}
+
+// Attendant Duty Table
+model AttendantDuty {
+  id          Int       @id @default(autoincrement()) @map("DutyID")
+  attendantId Int       @map("AttendantID")
+  hostelId    Int       @map("HostelID")
+  dutyDate    DateTime  @map("Duty_date")
+  dutyType    AttendantDutyType
+  attendant   Attendant @relation(fields: [attendantId], references: [id], onDelete: Cascade)
+  hostel      Hostel    @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  shiftType   ShiftType
+
+  @@map("AttendantDuty")
+  @@index([dutyDate])
+  @@index([shiftType])
+  @@index([dutyType])
+}
+
+// Hostel Warden Assignment Table
+model HostelWardenAssignment {
+  id            Int       @id @default(autoincrement()) @map("AssignmentID")
+  hostelId      Int       @map("HostelID")
+  wardenId      Int       @map("WardenID")
+  assignmentDate DateTime  @map("Assignment_date")
+  endDate       DateTime? @map("End_date")
+  hostel        Hostel    @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  warden        Warden    @relation(fields: [wardenId], references: [id], onDelete: Cascade)
+
+  @@unique([hostelId, wardenId, assignmentDate])
+  @@map("HostelWardenAssignment")
+}
+
+// Mess Bill Table
+model MessBill {
+  id                Int         @id @default(autoincrement()) @map("BillID")
+  studentId         Int         @map("StudentID")
+  billAmount        Decimal     @map("Bill_amount")  // Changed from Float
+  billGenerationDate DateTime    @map("Bill_generation_date")
+  dueDate           DateTime    @map("Due_date")
+  billDepositDate   DateTime?   @map("Bill_deposit_date")
+  fine              Decimal     @default(0.00)      // Changed from Float
+  student           Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status     BillStatus @default(GENERATED)
+
+  @@map("MessBill")
+}
+enum PersonType {
+  Student
+  Warden
+  Attendant
+}
+enum BillStatus {
+  GENERATED
+  PAID
+  OVERDUE
+  CANCELLED
+}
+enum ShiftType {
+  MORNING    // 7AM-3PM
+  EVENING    // 3PM-11PM
+  NIGHT      // 11PM-7AM
+}
+enum RoomType {
+  SINGLE
+  DOUBLE
+  TRIPLE
+  DORMITORY
+}
+enum AttendantDutyType {
+  CLEANING
+  ROOM_MANAGEMENT
+  BASIC_ASSISTANCE
+  SECURITY
+}
