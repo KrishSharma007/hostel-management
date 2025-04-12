@@ -16,6 +16,13 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  IconButton,
+  Avatar,
+  Card,
+  CardContent,
+  CardHeader,
+  Tooltip,
+  Stack,
 } from "@mui/material";
 import {
   School as SchoolIcon,
@@ -24,26 +31,34 @@ import {
   Home as HomeIcon,
   Event as EventIcon,
   Assignment as AssignmentIcon,
+  Phone as PhoneIcon,
+  Email as EmailIcon,
+  LocationOn as LocationIcon,
+  Close as CloseIcon,
+  Payment as PaymentIcon,
+  MeetingRoom as RoomIcon,
+  ContactPhone as EmergencyIcon,
+  CalendarMonth as CalendarIcon,
 } from "@mui/icons-material";
 
 const PersonDetail = ({ open, onClose, person }) => {
   if (!person) return null;
 
-  const getPersonIcon = () => {
+  const getPersonTypeColor = () => {
     switch (person.personType) {
       case "Student":
-        return <SchoolIcon fontSize="large" color="primary" />;
+        return "#3f51b5";
       case "Warden":
-        return <SupervisorIcon fontSize="large" color="primary" />;
+        return "#4caf50";
       case "Attendant":
-        return <SupportIcon fontSize="large" color="primary" />;
+        return "#ff9800";
       default:
-        return null;
+        return "#757575";
     }
   };
 
   const renderAddress = () => {
-    if (!person.personalAddress) return "N/A";
+    if (!person.personalAddress) return "Not Available";
 
     return (
       <>
@@ -56,154 +71,212 @@ const PersonDetail = ({ open, onClose, person }) => {
     );
   };
 
+  const renderPersonalInfoCard = () => (
+    <Card variant="outlined" sx={{ mb: 3 }}>
+      <CardHeader
+        avatar={
+          <Avatar sx={{ bgcolor: getPersonTypeColor() }}>
+            {person.name.charAt(0).toUpperCase()}
+          </Avatar>
+        }
+        title={
+          <Typography variant="h6">
+            {person.name}
+            <Chip
+              label={person.personType}
+              size="small"
+              sx={{ ml: 1, bgcolor: getPersonTypeColor(), color: "white" }}
+            />
+          </Typography>
+        }
+        action={
+          <IconButton onClick={onClose} aria-label="close">
+            <CloseIcon />
+          </IconButton>
+        }
+      />
+      <CardContent>
+        <Stack spacing={2}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <PhoneIcon color="action" fontSize="small" />
+            <Typography variant="body1">
+              {person.contactNo || "Not Available"}
+            </Typography>
+          </Box>
+
+          <Box display="flex" alignItems="flex-start" gap={1}>
+            <LocationIcon color="action" fontSize="small" sx={{ mt: 0.5 }} />
+            <Typography variant="body1">{renderAddress()}</Typography>
+          </Box>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+
+  const renderTableWithTitle = (
+    title,
+    icon,
+    data,
+    columns,
+    renderRow,
+    emptyMessage
+  ) => (
+    <Card variant="outlined" sx={{ mb: 3 }}>
+      <CardHeader
+        avatar={icon}
+        title={<Typography variant="h6">{title}</Typography>}
+      />
+      <CardContent>
+        {data && data.length > 0 ? (
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  {columns.map((column, index) => (
+                    <TableCell key={index}>{column}</TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>{data.map(renderRow)}</TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            {emptyMessage}
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   const renderStudentDetails = () => {
     if (person.personType !== "Student") return null;
 
     return (
       <>
-        <Grid item xs={12}>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" gutterBottom>
-            Emergency Contacts
-          </Typography>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <Typography variant="subtitle2" color="text.secondary">
-            Emergency Contact
-          </Typography>
-          <Typography variant="body1">
-            {person.emergencyContact || "N/A"}
-          </Typography>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <Typography variant="subtitle2" color="text.secondary">
-            Father's Contact
-          </Typography>
-          <Typography variant="body1">
-            {person.fatherContact || "N/A"}
-          </Typography>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <Typography variant="subtitle2" color="text.secondary">
-            Mother's Contact
-          </Typography>
-          <Typography variant="body1">
-            {person.motherContact || "N/A"}
-          </Typography>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <Typography variant="subtitle2" color="text.secondary">
-            Remark
-          </Typography>
-          <Typography variant="body1">{person.remark || "N/A"}</Typography>
-        </Grid>
+        <Card variant="outlined" sx={{ mb: 3 }}>
+          <CardHeader
+            avatar={<EmergencyIcon color="error" />}
+            title={<Typography variant="h6">Emergency Contacts</Typography>}
+          />
+          <CardContent>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={4}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Emergency Contact
+                </Typography>
+                <Typography variant="body2">
+                  {person.emergencyContact || "Not Available"}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Father's Contact
+                </Typography>
+                <Typography variant="body2">
+                  {person.fatherContact || "Not Available"}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Mother's Contact
+                </Typography>
+                <Typography variant="body2">
+                  {person.motherContact || "Not Available"}
+                </Typography>
+              </Grid>
+              {person.remark && (
+                <Grid item xs={12}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Remark
+                  </Typography>
+                  <Typography variant="body2">{person.remark}</Typography>
+                </Grid>
+              )}
+            </Grid>
+          </CardContent>
+        </Card>
 
-        {/* Room Allocation */}
-        <Grid item xs={12}>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" gutterBottom>
-            Room Allocation
-          </Typography>
-        </Grid>
-        {person.roomAllocations && person.roomAllocations.length > 0 ? (
-          <Grid item xs={12}>
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Hostel</TableCell>
-                    <TableCell>Room</TableCell>
-                    <TableCell>Academic Year</TableCell>
-                    <TableCell>Start Date</TableCell>
-                    <TableCell>End Date</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {person.roomAllocations.map((allocation) => (
-                    <TableRow key={allocation.id}>
-                      <TableCell>
-                        {allocation.room?.hostel?.name || "N/A"}
-                      </TableCell>
-                      <TableCell>
-                        {allocation.room?.roomType || "N/A"}
-                      </TableCell>
-                      <TableCell>{allocation.academicYear}</TableCell>
-                      <TableCell>
-                        {new Date(allocation.startDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        {allocation.endDate
-                          ? new Date(allocation.endDate).toLocaleDateString()
-                          : "Current"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Grid>
-        ) : (
-          <Grid item xs={12}>
-            <Typography variant="body1">No room allocations found</Typography>
-          </Grid>
+        {renderTableWithTitle(
+          "Room Allocation History",
+          <RoomIcon color="primary" />,
+          person.roomAllocations,
+          ["Hostel", "Room", "Academic Year", "Start Date", "End Date"],
+          (allocation) => (
+            <TableRow key={allocation.id} hover>
+              <TableCell>{allocation.room?.hostel?.name || "N/A"}</TableCell>
+              <TableCell>{allocation.room?.roomType || "N/A"}</TableCell>
+              <TableCell>{allocation.academicYear}</TableCell>
+              <TableCell>
+                {new Date(allocation.startDate).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                {allocation.endDate ? (
+                  new Date(allocation.endDate).toLocaleDateString()
+                ) : (
+                  <Chip size="small" label="Current" color="success" />
+                )}
+              </TableCell>
+            </TableRow>
+          ),
+          "No room allocations found"
         )}
 
-        {/* Mess Bills */}
-        <Grid item xs={12}>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" gutterBottom>
-            Mess Bills
-          </Typography>
-        </Grid>
-        {person.messBills && person.messBills.length > 0 ? (
-          <Grid item xs={12}>
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Bill ID</TableCell>
-                    <TableCell>Amount</TableCell>
-                    <TableCell>Generation Date</TableCell>
-                    <TableCell>Due Date</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Fine</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {person.messBills.map((bill) => (
-                    <TableRow key={bill.id}>
-                      <TableCell>{bill.id}</TableCell>
-                      <TableCell>₹{bill.billAmount}</TableCell>
-                      <TableCell>
-                        {new Date(bill.billGenerationDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(bill.dueDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={bill.status}
-                          color={
-                            bill.status === "PAID"
-                              ? "success"
-                              : bill.status === "OVERDUE"
-                              ? "error"
-                              : "default"
-                          }
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>₹{bill.fine}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Grid>
-        ) : (
-          <Grid item xs={12}>
-            <Typography variant="body1">No mess bills found</Typography>
-          </Grid>
+        {renderTableWithTitle(
+          "Mess Bills",
+          <PaymentIcon color="primary" />,
+          person.messBills,
+          [
+            "Bill ID",
+            "Amount",
+            "Generation Date",
+            "Due Date",
+            "Status",
+            "Fine",
+          ],
+          (bill) => (
+            <TableRow
+              key={bill.id}
+              hover
+              sx={
+                bill.status === "OVERDUE"
+                  ? { bgcolor: "rgba(244, 67, 54, 0.08)" }
+                  : {}
+              }
+            >
+              <TableCell>{bill.id}</TableCell>
+              <TableCell>₹{bill.billAmount.toLocaleString()}</TableCell>
+              <TableCell>
+                {new Date(bill.billGenerationDate).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                {new Date(bill.dueDate).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                <Chip
+                  label={bill.status}
+                  color={
+                    bill.status === "PAID"
+                      ? "success"
+                      : bill.status === "OVERDUE"
+                      ? "error"
+                      : "default"
+                  }
+                  size="small"
+                />
+              </TableCell>
+              <TableCell>
+                {bill.fine > 0 ? (
+                  <Typography color="error">
+                    ₹{bill.fine.toLocaleString()}
+                  </Typography>
+                ) : (
+                  "₹0"
+                )}
+              </TableCell>
+            </TableRow>
+          ),
+          "No mess bills found"
         )}
       </>
     );
@@ -214,48 +287,27 @@ const PersonDetail = ({ open, onClose, person }) => {
 
     return (
       <>
-        {/* Hostel Assignments */}
-        <Grid item xs={12}>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" gutterBottom>
-            Hostel Assignments
-          </Typography>
-        </Grid>
-        {person.hostelAssignments && person.hostelAssignments.length > 0 ? (
-          <Grid item xs={12}>
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Hostel</TableCell>
-                    <TableCell>Assignment Date</TableCell>
-                    <TableCell>End Date</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {person.hostelAssignments.map((assignment) => (
-                    <TableRow key={assignment.id}>
-                      <TableCell>{assignment.hostel?.name || "N/A"}</TableCell>
-                      <TableCell>
-                        {new Date(
-                          assignment.assignmentDate
-                        ).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        {assignment.endDate
-                          ? new Date(assignment.endDate).toLocaleDateString()
-                          : "Current"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Grid>
-        ) : (
-          <Grid item xs={12}>
-            <Typography variant="body1">No hostel assignments found</Typography>
-          </Grid>
+        {renderTableWithTitle(
+          "Hostel Assignments",
+          <SupervisorIcon color="primary" />,
+          person.hostelAssignments,
+          ["Hostel", "Assignment Date", "End Date"],
+          (assignment) => (
+            <TableRow key={assignment.id} hover>
+              <TableCell>{assignment.hostel?.name || "N/A"}</TableCell>
+              <TableCell>
+                {new Date(assignment.assignmentDate).toLocaleDateString()}
+              </TableCell>
+              <TableCell>
+                {assignment.endDate ? (
+                  new Date(assignment.endDate).toLocaleDateString()
+                ) : (
+                  <Chip size="small" label="Current" color="success" />
+                )}
+              </TableCell>
+            </TableRow>
+          ),
+          "No hostel assignments found"
         )}
       </>
     );
@@ -266,118 +318,67 @@ const PersonDetail = ({ open, onClose, person }) => {
 
     return (
       <>
-        {/* Duties */}
-        <Grid item xs={12}>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" gutterBottom>
-            Duties
-          </Typography>
-        </Grid>
-        {person.duties && person.duties.length > 0 ? (
-          <Grid item xs={12}>
-            <TableContainer component={Paper} variant="outlined">
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Hostel</TableCell>
-                    <TableCell>Duty Type</TableCell>
-                    <TableCell>Shift</TableCell>
-                    <TableCell>Date</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {person.duties.map((duty) => (
-                    <TableRow key={duty.id}>
-                      <TableCell>{duty.hostel?.name || "N/A"}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={duty.dutyType}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={duty.shiftType}
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {new Date(duty.dutyDate).toLocaleDateString()}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Grid>
-        ) : (
-          <Grid item xs={12}>
-            <Typography variant="body1">No duties assigned</Typography>
-          </Grid>
+        {renderTableWithTitle(
+          "Duty Schedule",
+          <CalendarIcon color="primary" />,
+          person.duties,
+          ["Hostel", "Duty Type", "Shift", "Date"],
+          (duty) => (
+            <TableRow key={duty.id} hover>
+              <TableCell>{duty.hostel?.name || "N/A"}</TableCell>
+              <TableCell>
+                <Chip
+                  label={duty.dutyType}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                />
+              </TableCell>
+              <TableCell>
+                <Chip
+                  label={duty.shiftType}
+                  size="small"
+                  color="secondary"
+                  variant="outlined"
+                />
+              </TableCell>
+              <TableCell>
+                {new Date(duty.dutyDate).toLocaleDateString()}
+              </TableCell>
+            </TableRow>
+          ),
+          "No duties assigned"
         )}
       </>
     );
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <Box display="flex" alignItems="center" gap={2}>
-          {getPersonIcon()}
-          <Typography variant="h5">
-            {person.name} ({person.personType})
-          </Typography>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 2 },
+      }}
+    >
+      <DialogContent sx={{ p: 3 }}>
+        {renderPersonalInfoCard()}
+
+        {renderStudentDetails()}
+        {renderWardenDetails()}
+        {renderAttendantDetails()}
+
+        <Box display="flex" justifyContent="flex-end">
+          <Button
+            variant="contained"
+            onClick={onClose}
+            startIcon={<CloseIcon />}
+          >
+            Close
+          </Button>
         </Box>
-      </DialogTitle>
-      <DialogContent>
-        <Paper sx={{ p: 3 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                Personal Information
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="subtitle2" color="text.secondary">
-                Name
-              </Typography>
-              <Typography variant="body1">{person.name}</Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Typography variant="subtitle2" color="text.secondary">
-                Contact Number
-              </Typography>
-              <Typography variant="body1">
-                {person.contactNo || "N/A"}
-              </Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" gutterBottom>
-                Address
-              </Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="body1">{renderAddress()}</Typography>
-            </Grid>
-
-            {renderStudentDetails()}
-            {renderWardenDetails()}
-            {renderAttendantDetails()}
-
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="flex-end" mt={3}>
-                <Button variant="outlined" onClick={onClose}>
-                  Close
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        </Paper>
       </DialogContent>
     </Dialog>
   );
