@@ -11,129 +11,9 @@ try {
   console.log("Prisma client initialized successfully");
 } catch (error) {
   console.error("Failed to initialize Prisma client:", error);
-  // Create a mock Prisma client with error responses
-  prisma = {
-    $connect: async () => {
-      throw new Error("Database connection failed");
-    },
-    $disconnect: async () => {
-      console.log("Mock Prisma client disconnected");
-    },
-    // Add mock methods that return errors
-    person: {
-      findMany: async () => {
-        throw new Error("Database connection failed");
-      },
-      findUnique: async () => {
-        throw new Error("Database connection failed");
-      },
-      create: async () => {
-        throw new Error("Database connection failed");
-      },
-      update: async () => {
-        throw new Error("Database connection failed");
-      },
-      delete: async () => {
-        throw new Error("Database connection failed");
-      },
-    },
-    // Add other models as needed
-    student: {
-      findMany: async () => {
-        throw new Error("Database connection failed");
-      },
-      findUnique: async () => {
-        throw new Error("Database connection failed");
-      },
-    },
-    hostel: {
-      findMany: async () => {
-        throw new Error("Database connection failed");
-      },
-      findUnique: async () => {
-        throw new Error("Database connection failed");
-      },
-    },
-    room: {
-      findMany: async () => {
-        throw new Error("Database connection failed");
-      },
-      findUnique: async () => {
-        throw new Error("Database connection failed");
-      },
-    },
-    messBill: {
-      findMany: async () => {
-        throw new Error("Database connection failed");
-      },
-      findUnique: async () => {
-        throw new Error("Database connection failed");
-      },
-      update: async () => {
-        throw new Error("Database connection failed");
-      },
-    },
-    roomAllocation: {
-      findMany: async () => {
-        throw new Error("Database connection failed");
-      },
-      findUnique: async () => {
-        throw new Error("Database connection failed");
-      },
-      create: async () => {
-        throw new Error("Database connection failed");
-      },
-      update: async () => {
-        throw new Error("Database connection failed");
-      },
-      delete: async () => {
-        throw new Error("Database connection failed");
-      },
-    },
-    $transaction: async (callback) => {
-      throw new Error("Database connection failed");
-    },
-  };
 }
 
 const app = express();
-
-/**
- * HOSTEL MANAGEMENT SYSTEM API
- * ============================
- *
- * This API provides endpoints for managing a hostel system, including:
- * - Person management (students, wardens, attendants)
- * - Hostel management
- * - Room allocation
- * - Billing
- *
- * API VERSION: 1.0.0
- *
- * IMPORTANT NOTES ABOUT IDS IN THIS API:
- *
- * - The Student model's primary identifier in the API is personId, not id
- * - When API routes reference /students/:id, the id parameter refers to personId
- * - For room allocations, the studentId parameter refers to personId
- * - We internally map personId to the actual studentId for database operations
- *
- * This approach allows the frontend to work with Person IDs consistently.
- *
- * ERROR HANDLING:
- * All endpoints return appropriate HTTP status codes:
- * - 200: Success
- * - 201: Resource created successfully
- * - 400: Bad request (validation errors)
- * - 404: Resource not found
- * - 500: Server error
- *
- * Error responses follow the format:
- * {
- *   "error": "Error type",
- *   "message": "Detailed error message"
- * }
- */
-
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -362,56 +242,9 @@ const validate = (schema) => (req, res, next) => {
   }
 };
 
-// Database Helpers
-const db = {
-  createHostelWithRooms: async (data) => {
-    return prisma.$transaction(async (tx) => {
-      const hostel = await tx.hostel.create({
-        data: { name: data.name, hostelAddress: { create: data.address } },
-      });
-
-      const rooms = Object.entries(data.rooms)
-        .filter(([_, count]) => count > 0)
-        .flatMap(([type, count]) =>
-          Array.from({ length: count }, () => ({
-            hostelId: hostel.id,
-            roomType: type,
-            capacity: ROOM_DEFAULTS[type],
-            furnitureDetails: `Standard ${type.toLowerCase()} room`,
-          }))
-        );
-
-      if (rooms.length) await tx.room.createMany({ data: rooms });
-      return hostel;
-    });
-  },
-};
-
 // Add a global error handler for database errors
 app.use((err, req, res, next) => {
   console.error("[Error]", err);
-
-  // Check if it's a database connection error
-  if (err.message && err.message.includes("Database connection failed")) {
-    return res.status(503).json({
-      error: "Service Unavailable",
-      message: "Database connection failed. Please try again later.",
-      details: process.env.NODE_ENV === "development" ? err.message : undefined,
-    });
-  }
-
-  if (err instanceof z.ZodError) {
-    return res.status(400).json({
-      error: "Validation Error",
-      issues: err.issues.map((i) => ({ path: i.path, message: i.message })),
-    });
-  }
-
-  const statusCode = err.message.includes("not found") ? 404 : 500;
-  res.status(statusCode).json({
-    error: statusCode === 404 ? "Not Found" : "Internal Server Error",
-    message: err.message,
-  });
 });
 
 // ================ Endpoints ================ //
@@ -1182,20 +1015,6 @@ app.get("/api/hostels", async (req, res) => {
   }
 });
 
-app.get("/api/hostels/:id", async (req, res) => {
-  const id = parseInt(req.params.id);
-  const hostel = await prisma.hostel.findUnique({
-    where: { id },
-    include: { hostelAddress: true, rooms: true },
-  });
-
-  if (!hostel) {
-    return res.status(404).json({ error: "Hostel not found" });
-  }
-
-  res.json(hostel);
-});
-
 // Get rooms for a specific hostel
 app.get("/api/hostels/:id/rooms", async (req, res) => {
   const id = parseInt(req.params.id);
@@ -1418,67 +1237,6 @@ app.delete("/api/hostels/:id", async (req, res) => {
     res
       .status(500)
       .json({ error: "Failed to delete hostel", message: err.message });
-  }
-});
-
-app.get("/api/hostels/stats", async (req, res) => {
-  try {
-    const hostels = await prisma.hostel.findMany({
-      include: {
-        rooms: {
-          include: {
-            _count: { select: { allocations: { where: { endDate: null } } } },
-          },
-        },
-      },
-    });
-
-    const stats = hostels.map((hostel) => {
-      let totalCapacity = 0;
-      let totalOccupied = 0;
-      const roomTypes = {};
-
-      hostel.rooms.forEach((room) => {
-        const type = room.roomType;
-        const occupied = room._count.allocations;
-        const available = room.capacity - occupied;
-
-        roomTypes[type] = roomTypes[type] || {
-          count: 0,
-          capacity: 0,
-          occupied: 0,
-          available: 0,
-        };
-        roomTypes[type].count++;
-        roomTypes[type].capacity += room.capacity;
-        roomTypes[type].occupied += occupied;
-        roomTypes[type].available += available;
-
-        totalCapacity += room.capacity;
-        totalOccupied += occupied;
-      });
-
-      const occupancyRate =
-        totalCapacity > 0 ? (totalOccupied / totalCapacity) * 100 : 0;
-
-      return {
-        hostelId: hostel.id,
-        name: hostel.name,
-        totalRooms: hostel.rooms.length,
-        totalCapacity,
-        totalOccupied,
-        available: totalCapacity - totalOccupied,
-        occupancyRate: parseFloat(occupancyRate.toFixed(2)),
-        roomTypes,
-      };
-    });
-
-    res.json(stats);
-  } catch (err) {
-    console.error("Error fetching hostel stats:", err);
-    res
-      .status(500)
-      .json({ error: "Failed to fetch hostel stats", message: err.message });
   }
 });
 
@@ -1938,47 +1696,6 @@ app.put("/api/hostel-warden-assignments/:id", async (req, res) => {
   }
 });
 
-// Get warden assignments for a hostel
-app.get("/api/hostels/:hostelId/warden-assignments", async (req, res) => {
-  const hostelId = parseInt(req.params.hostelId);
-
-  try {
-    // Check if hostel exists
-    const hostel = await prisma.hostel.findUnique({
-      where: { id: hostelId },
-    });
-
-    if (!hostel) {
-      return res.status(404).json({ error: "Hostel not found" });
-    }
-
-    // Get warden assignments
-    const assignments = await prisma.hostelWardenAssignment.findMany({
-      where: { hostelId },
-      include: {
-        warden: {
-          include: {
-            person: true,
-          },
-        },
-      },
-      orderBy: [
-        {
-          assignmentDate: "desc",
-        },
-      ],
-    });
-
-    res.status(200).json(assignments);
-  } catch (err) {
-    console.error("Error fetching warden assignments:", err);
-    res.status(500).json({
-      error: "Failed to fetch warden assignments",
-      message: err.message,
-    });
-  }
-});
-
 // Attendant Duties Management
 app.post("/api/attendant-duties", async (req, res) => {
   const { attendantId, hostelId, dutyType, shiftType, dutyDate } = req.body;
@@ -2147,45 +1864,6 @@ app.get("/api/attendants/:attendantId/duties", async (req, res) => {
   }
 });
 
-// Get attendant duties for a hostel
-app.get("/api/hostels/:hostelId/attendant-duties", async (req, res) => {
-  const hostelId = parseInt(req.params.hostelId);
-
-  try {
-    // Check if hostel exists
-    const hostel = await prisma.hostel.findUnique({
-      where: { id: hostelId },
-    });
-
-    if (!hostel) {
-      return res.status(404).json({ error: "Hostel not found" });
-    }
-
-    // Get attendant duties
-    const duties = await prisma.attendantDuty.findMany({
-      where: { hostelId },
-      include: {
-        attendant: {
-          include: {
-            person: true,
-          },
-        },
-      },
-      orderBy: {
-        dutyDate: "desc",
-      },
-    });
-
-    res.status(200).json(duties);
-  } catch (err) {
-    console.error("Error fetching attendant duties:", err);
-    res.status(500).json({
-      error: "Failed to fetch attendant duties",
-      message: err.message,
-    });
-  }
-});
-
 // Mess Bill Management
 app.get("/api/bills", async (req, res) => {
   try {
@@ -2236,36 +1914,6 @@ app.get("/api/bills", async (req, res) => {
     res
       .status(500)
       .json({ error: "Failed to fetch bills", details: error.message });
-  }
-});
-
-app.get("/api/bills/:id", async (req, res) => {
-  try {
-    const bill = await prisma.messBill.findUnique({
-      where: { id: parseInt(req.params.id) },
-      include: {
-        student: {
-          select: {
-            id: true,
-            person: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!bill) {
-      return res.status(404).json({ error: "Bill not found" });
-    }
-
-    res.json(bill);
-  } catch (error) {
-    console.error("Error fetching bill:", error);
-    res.status(500).json({ error: "Failed to fetch bill" });
   }
 });
 
