@@ -1,7 +1,6 @@
 import axios from "axios";
 
-const API_URL =
-  "https://hostel-management-we8d.onrender.com/api";
+const API_URL = "https://hostel-management-we8d.onrender.com/api";
 
 // Create axios instance
 const api = axios.create({
@@ -11,34 +10,6 @@ const api = axios.create({
   },
 });
 
-// Person Service
-export const PersonService = {
-  getAll: async (type = null) => {
-    const params = new URLSearchParams();
-    if (type) params.append("type", type);
-
-    const response = await api.get(
-      `/persons${params.toString() ? `?${params.toString()}` : ""}`
-    );
-    return response.data;
-  },
-  getById: async (id) => {
-    const response = await api.get(`/persons/${id}`);
-    return response.data;
-  },
-  create: async (data) => {
-    const response = await api.post("/persons", data);
-    return response.data;
-  },
-  update: async (id, data) => {
-    const response = await api.put(`/persons/${id}`, data);
-    return response.data;
-  },
-  delete: async (id) => {
-    await api.delete(`/persons/${id}`);
-    return true;
-  },
-};
 
 // Student Service
 export const StudentService = {
@@ -120,10 +91,6 @@ export const HostelService = {
     const response = await api.get("/hostels");
     return response.data;
   },
-  getById: async (id) => {
-    const response = await api.get(`/hostels/${id}`);
-    return response.data;
-  },
   create: async (data) => {
     const response = await api.post("/hostels", data);
     return response.data;
@@ -140,77 +107,8 @@ export const HostelService = {
     const response = await api.get(`/hostels/${id}/rooms`);
     return response.data;
   },
-  getStats: async () => {
-    const response = await api.get("/hostels/stats");
-    return response.data;
-  },
 };
 
-// Room Service
-export const RoomService = {
-  getAll: async (filters = {}) => {
-    const params = new URLSearchParams();
-    if (filters.roomType) params.append("roomType", filters.roomType);
-    if (filters.academicYear)
-      params.append("academicYear", filters.academicYear);
-
-    const response = await api.get(
-      `/rooms${params.toString() ? `?${params.toString()}` : ""}`
-    );
-    return response.data;
-  },
-  getById: async (id) => {
-    const response = await api.get(`/rooms/${id}`);
-    return response.data;
-  },
-};
-
-// Room Allocation Service
-export const RoomAllocationService = {
-  getAll: async (filters = {}) => {
-    const params = new URLSearchParams();
-    if (filters.roomId) params.append("roomId", filters.roomId);
-    if (filters.studentId) params.append("studentId", filters.studentId);
-    if (filters.status) params.append("status", filters.status);
-
-    const response = await api.get(
-      `/room-allocations${params.toString() ? `?${params.toString()}` : ""}`
-    );
-    return response.data;
-  },
-  getById: async (id) => {
-    const response = await api.get(`/room-allocations/${id}`);
-    return response.data;
-  },
-  create: async (data) => {
-    const response = await api.post("/room-allocations", data);
-    return response.data;
-  },
-  update: async (id, data) => {
-    const response = await api.put(`/room-allocations/${id}`, data);
-    return response.data;
-  },
-  delete: async (id) => {
-    await api.delete(`/room-allocations/${id}`);
-    return true;
-  },
-};
-
-// Allocation Service
-export const AllocationService = {
-  create: async (data) => {
-    const response = await api.post("/allocations", data);
-    return response.data;
-  },
-  update: async (id, data) => {
-    const response = await api.put(`/allocations/${id}`, data);
-    return response.data;
-  },
-  delete: async (id) => {
-    await api.delete(`/allocations/${id}`);
-    return true;
-  },
-};
 
 // Mess Bill Service
 export const MessBillService = {
@@ -219,12 +117,6 @@ export const MessBillService = {
     const response = await api.get(`/bills?${queryString}`);
     return response.data;
   },
-
-  getById: async (id) => {
-    const response = await api.get(`/bills/${id}`);
-    return response.data;
-  },
-
   create: async (data) => {
     const response = await api.post("/bills", data);
     return response.data;
@@ -240,7 +132,6 @@ export const MessBillService = {
     return response.data;
   },
 };
-
 // Warden Assignment Service
 export const WardenAssignmentService = {
   create: async (data) => {
@@ -249,10 +140,6 @@ export const WardenAssignmentService = {
   },
   update: async (id, data) => {
     const response = await api.put(`/hostel-warden-assignments/${id}`, data);
-    return response.data;
-  },
-  getByHostel: async (hostelId) => {
-    const response = await api.get(`/hostels/${hostelId}/warden-assignments`);
     return response.data;
   },
   getByWarden: async (wardenId) => {
@@ -277,10 +164,6 @@ export const AttendantDutyService = {
   },
   getByAttendant: async (attendantId) => {
     const response = await api.get(`/attendants/${attendantId}/duties`);
-    return response.data;
-  },
-  getByHostel: async (hostelId) => {
-    const response = await api.get(`/hostels/${hostelId}/attendant-duties`);
     return response.data;
   },
 };
