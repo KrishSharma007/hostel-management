@@ -237,8 +237,14 @@ const PersonList = ({ onDelete }) => {
     setSelectedPerson(null);
   };
 
-  const handleDeletePerson = (person) => {
-    onDelete(person);
+  const handleDeletePerson = async (person) => {
+    try {
+      await onDelete(person);
+      // Refresh the list after successful deletion
+      await fetchPersons();
+    } catch (error) {
+      console.error("Error in handleDeletePerson:", error);
+    }
   };
 
   const handleAllocateWarden = (person) => {
